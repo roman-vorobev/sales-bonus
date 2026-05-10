@@ -97,24 +97,20 @@ function analyzeSalesData(data, options) {
 
   data.purchase_records.forEach((receipt) => {
     const seller = stats[receipt.seller_id];
-
     if (seller) {
       receipt.items.forEach((item) => {
         const product = productsMap[item.sku];
-
         if (product) {
           const count = item.quantity || 0;
-
-          const revenue = options.calculateRevenue(item, product);
-
+          const revenue = calculateRevenue(item, product);
           const cost = count * (product.purchase_price || 0);
           const profit = revenue - cost;
 
           seller.revenue += revenue;
           seller.profit += profit;
           seller.sales_count += count;
-          seller.products_qty[product.name] =
-            (seller.products_qty[product.name] || 0) + count;
+          seller.products_qty[item.sku] =
+            (seller.products_qty[item.sku] || 0) + count;
         }
       });
     }
@@ -125,21 +121,21 @@ function analyzeSalesData(data, options) {
   );
 
   return sortedSellers.map((seller, index) => {
+    const top_products = Object.entries(seller.products_qty)
+      .map(([sku, quantity]) => ({ quantity, sku }))
+      .sort((a, b) => b.quantity - a.quantity || a.sku.localeCompare(b.sku)) // Сортировка по количеству, затем по SKU
+      .slice(0, 10);
+
     const bonus = calculateBonus(index, sortedSellers.length, seller);
 
-    const top_products = Object.entries(seller.products_qty)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([name]) => name);
-
     return {
-      seller_id: seller.seller_id,
-      name: seller.name,
-      revenue: Number(seller.revenue.toFixed(2)),
-      profit: Number(seller.profit.toFixed(2)),
-      sales_count: seller.sales_count,
-      top_products: top_products,
       bonus: Number(bonus.toFixed(2)),
+      name: seller.name,
+      profit: Number(seller.profit.toFixed(2)),
+      revenue: Number(seller.revenue.toFixed(2)),
+      sales_count: seller.sales_count,
+      seller_id: seller.seller_id,
+      top_products: top_products,
     };
   });
 }

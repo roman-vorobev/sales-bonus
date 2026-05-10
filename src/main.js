@@ -50,43 +50,34 @@ function calculateBonusByProfit(index, total, seller) {
 // @TODO: Назначение премий на основе ранжирования
 // @TODO: Подготовка итоговой коллекции с нужными полями
 function analyzeSalesData(data, options) {
-  if (
-    !data ||
-    !data.customers ||
-    !data.sellers ||
-    !data.products ||
-    !data.purchase_records
-  ) {
-    throw new Error("Переданы некорректные данные");
+  if (!data || !data.sellers || !data.products || !data.purchase_records) {
+    throw new Error("Incorrect data");
   }
-
-  if (
-    !options ||
-    typeof options.calculateRevenue !== "function" ||
-    typeof options.calculateBonus !== "function"
-  ) {
-    throw new Error("Некорректные опции");
-  }
-
   if (
     data.sellers.length === 0 ||
     data.products.length === 0 ||
     data.purchase_records.length === 0
   ) {
-    throw new Error("Массивы данных не могут быть пустыми");
+    throw new Error("Empty data");
+  }
+  if (
+    !options ||
+    typeof options.calculateRevenue !== "function" ||
+    typeof options.calculateBonus !== "function"
+  ) {
+    throw new Error("Incorrect options");
   }
 
   const { calculateRevenue, calculateBonus } = options;
-
   const productsMap = data.products.reduce((acc, p) => {
     acc[p.sku] = p;
     return acc;
   }, {});
 
-  const stats = data.sellers.reduce((acc, seller) => {
-    acc[seller.id] = {
-      seller_id: seller.id,
-      name: `${seller.first_name} ${seller.last_name}`,
+  const stats = data.sellers.reduce((acc, s) => {
+    acc[s.id] = {
+      seller_id: s.id,
+      name: `${s.first_name} ${s.last_name}`,
       revenue: 0,
       profit: 0,
       sales_count: 0,
@@ -101,16 +92,16 @@ function analyzeSalesData(data, options) {
       receipt.items.forEach((item) => {
         const product = productsMap[item.sku];
         if (product) {
-          const count = item.quantity || 0;
           const revenue = calculateRevenue(item, product);
-          const cost = count * (product.purchase_price || 0);
-          const profit = revenue - cost;
+          const cost = (item.quantity || 0) * (product.purchase_price || 0);
 
           seller.revenue += revenue;
-          seller.profit += profit;
-          seller.sales_count += count;
+          seller.profit += revenue - cost;
+
+          seller.sales_count += 1;
+
           seller.products_qty[item.sku] =
-            (seller.products_qty[item.sku] || 0) + count;
+            (seller.products_qty[item.sku] || 0) + (item.quantity || 0);
         }
       });
     }
@@ -123,7 +114,10 @@ function analyzeSalesData(data, options) {
   return sortedSellers.map((seller, index) => {
     const top_products = Object.entries(seller.products_qty)
       .map(([sku, quantity]) => ({ quantity, sku }))
-      .sort((a, b) => b.quantity - a.quantity || a.sku.localeCompare(b.sku)) // Сортировка по количеству, затем по SKU
+      .sort((a, b) => {
+        if (b.quantity !== a.quantity) return b.quantity - a.quantity;
+        return a.sku.localeCompare(b.sku);
+      })
       .slice(0, 10);
 
     const bonus = calculateBonus(index, sortedSellers.length, seller);

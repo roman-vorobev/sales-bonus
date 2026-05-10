@@ -73,7 +73,7 @@ function analyzeSalesData(data, options) {
     data.products.length === 0 ||
     data.purchase_records.length === 0
   ) {
-    return [];
+    throw new Error("Массивы данных не могут быть пустыми");
   }
 
   const { calculateRevenue, calculateBonus } = options;

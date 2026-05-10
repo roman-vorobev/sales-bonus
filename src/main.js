@@ -22,13 +22,13 @@ function calculateSimpleRevenue(purchase, _product) {
  */
 function calculateBonusByProfit(index, total, seller) {
   const profit = seller.profit;
-
   if (profit <= 0) return 0;
-
   if (index === 0) {
     return profit * 0.15;
   }
-
+  if (index === 1 || index === 2) {
+    return profit * 0.1;
+  }
   if (index === total - 1) {
     return 0;
   }
@@ -57,9 +57,17 @@ function analyzeSalesData(data, options) {
     !data.products ||
     !data.purchase_records
   ) {
-    console.error("Недостаточно данных для анализа");
-    return;
+    throw new Error("Переданы некорректные данные");
   }
+
+  if (
+    !options ||
+    typeof options.calculateRevenue !== "function" ||
+    typeof options.calculateBonus !== "function"
+  ) {
+    throw new Error("Некорректные опции");
+  }
+
   if (
     data.sellers.length === 0 ||
     data.products.length === 0 ||

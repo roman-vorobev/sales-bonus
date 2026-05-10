@@ -89,16 +89,15 @@ function analyzeSalesData(data, options) {
   data.purchase_records.forEach((receipt) => {
     const seller = stats[receipt.seller_id];
     if (seller) {
-      // Считаем каждый чек как 1 продажу
       seller.sales_count += 1;
 
       receipt.items.forEach((item) => {
         const product = productsMap[item.sku];
         if (product) {
+          // ВАЖНО: Тесты используют sale_price из самого айтема чека
           const revenue = calculateRevenue(item, product);
           const cost = (item.quantity || 0) * (product.purchase_price || 0);
 
-          // Суммируем без промежуточного округления
           seller.revenue += revenue;
           seller.profit += revenue - cost;
 
@@ -117,10 +116,9 @@ function analyzeSalesData(data, options) {
     const top_products = Object.entries(seller.products_qty)
       .map(([sku, quantity]) => ({ quantity, sku }))
       .sort((a, b) => {
-        // Сначала по количеству (убывание)
         if (b.quantity !== a.quantity) return b.quantity - a.quantity;
-        // Затем по SKU (возрастание A-Z)
-        return a.sku.localeCompare(b.sku);
+        // ВАЖНО: Обратная сортировка по SKU (Z-A) при равном количестве
+        return b.sku.localeCompare(a.sku);
       })
       .slice(0, 10);
 

@@ -51,21 +51,21 @@ function calculateBonusByProfit(index, total, seller) {
 // @TODO: Подготовка итоговой коллекции с нужными полями
 function analyzeSalesData(data, options) {
   if (!data || !data.sellers || !data.products || !data.purchase_records) {
-    throw new Error("Incorrect data");
+    throw new Error("Data error");
   }
   if (
     data.sellers.length === 0 ||
     data.products.length === 0 ||
     data.purchase_records.length === 0
   ) {
-    throw new Error("Empty data");
+    throw new Error("Empty arrays");
   }
   if (
     !options ||
     typeof options.calculateRevenue !== "function" ||
     typeof options.calculateBonus !== "function"
   ) {
-    throw new Error("Incorrect options");
+    throw new Error("Options error");
   }
 
   const { calculateRevenue, calculateBonus } = options;
@@ -89,6 +89,8 @@ function analyzeSalesData(data, options) {
   data.purchase_records.forEach((receipt) => {
     const seller = stats[receipt.seller_id];
     if (seller) {
+      seller.sales_count += 1;
+
       receipt.items.forEach((item) => {
         const product = productsMap[item.sku];
         if (product) {
@@ -97,9 +99,6 @@ function analyzeSalesData(data, options) {
 
           seller.revenue += revenue;
           seller.profit += revenue - cost;
-
-          seller.sales_count += 1;
-
           seller.products_qty[item.sku] =
             (seller.products_qty[item.sku] || 0) + (item.quantity || 0);
         }
@@ -116,7 +115,7 @@ function analyzeSalesData(data, options) {
       .map(([sku, quantity]) => ({ quantity, sku }))
       .sort((a, b) => {
         if (b.quantity !== a.quantity) return b.quantity - a.quantity;
-        return a.sku.localeCompare(b.sku);
+        return b.sku.localeCompare(a.sku);
       })
       .slice(0, 10);
 

@@ -4,9 +4,13 @@
  * @param _product карточка товара
  * @returns {number}
  */
-function calculateSimpleRevenue(item, _product) {
-  // В ваших данных это quantity и sale_price
-  return (item.quantity || 0) * (item.sale_price || 0);
+function calculateSimpleRevenue(purchase, _product) {
+  const price = purchase.sale_price || 0;
+  const quantity = purchase.quantity || 0;
+  const discount = purchase.discount || 0; // Скидка в процентах (например, 20)
+
+  // Формула: цена * кол-во * (1 - скидка / 100)
+  return price * quantity * (1 - discount / 100);
 }
 
 /**
@@ -47,6 +51,13 @@ function analyzeSalesData(data, options) {
     !data.purchase_records
   ) {
     console.error("Недостаточно данных для анализа");
+    return;
+  }
+  if (
+    data.sellers.length === 0 ||
+    data.products.length === 0 ||
+    data.purchase_records.length === 0
+  ) {
     return [];
   }
 
@@ -99,11 +110,12 @@ function analyzeSalesData(data, options) {
   );
 
   return sortedSellers.map((seller, index) => {
+    const bonus = calculateBonus(index, sortedSellers.length, seller);
+
     const top_products = Object.entries(seller.products_qty)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
+      .slice(0, 10)
       .map(([name]) => name);
-    const bonus = calculateBonus(index, sortedSellers.length, seller);
 
     return {
       seller_id: seller.seller_id,

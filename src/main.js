@@ -22,10 +22,17 @@ function calculateSimpleRevenue(purchase, _product) {
  */
 function calculateBonusByProfit(index, total, seller) {
   const profit = seller.profit;
-  if (index < 3) {
-    return profit * 0.1; // 10% топ-менеджерам
+
+  if (profit <= 0) return 0;
+
+  if (index === 0) {
+    return profit * 0.15;
   }
-  return profit * 0.05; // 5% всем остальным
+
+  if (index === total - 1) {
+    return 0;
+  }
+  return profit * 0.05;
 }
 
 /**

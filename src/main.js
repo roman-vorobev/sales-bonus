@@ -51,21 +51,21 @@ function calculateBonusByProfit(index, total, seller) {
 // @TODO: Подготовка итоговой коллекции с нужными полями
 function analyzeSalesData(data, options) {
   if (!data || !data.sellers || !data.products || !data.purchase_records) {
-    throw new Error("Data error");
+    throw new Error("Incorrect data");
   }
   if (
     data.sellers.length === 0 ||
     data.products.length === 0 ||
     data.purchase_records.length === 0
   ) {
-    throw new Error("Empty arrays");
+    throw new Error("Empty data");
   }
   if (
     !options ||
     typeof options.calculateRevenue !== "function" ||
     typeof options.calculateBonus !== "function"
   ) {
-    throw new Error("Options error");
+    throw new Error("Incorrect options");
   }
 
   const { calculateRevenue, calculateBonus } = options;
@@ -89,6 +89,7 @@ function analyzeSalesData(data, options) {
   data.purchase_records.forEach((receipt) => {
     const seller = stats[receipt.seller_id];
     if (seller) {
+      // Считаем каждый чек как 1 продажу
       seller.sales_count += 1;
 
       receipt.items.forEach((item) => {
@@ -97,8 +98,10 @@ function analyzeSalesData(data, options) {
           const revenue = calculateRevenue(item, product);
           const cost = (item.quantity || 0) * (product.purchase_price || 0);
 
+          // Суммируем без промежуточного округления
           seller.revenue += revenue;
           seller.profit += revenue - cost;
+
           seller.products_qty[item.sku] =
             (seller.products_qty[item.sku] || 0) + (item.quantity || 0);
         }
@@ -114,8 +117,10 @@ function analyzeSalesData(data, options) {
     const top_products = Object.entries(seller.products_qty)
       .map(([sku, quantity]) => ({ quantity, sku }))
       .sort((a, b) => {
+        // Сначала по количеству (убывание)
         if (b.quantity !== a.quantity) return b.quantity - a.quantity;
-        return b.sku.localeCompare(a.sku);
+        // Затем по SKU (возрастание A-Z)
+        return a.sku.localeCompare(b.sku);
       })
       .slice(0, 10);
 

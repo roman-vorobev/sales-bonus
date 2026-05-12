@@ -119,7 +119,11 @@ function analyzeSalesData(data, options) {
   return sortedSellers.map((seller, index) => {
     const top_products = Object.entries(seller.products_qty)
       .map(([sku, quantity]) => ({ quantity, sku }))
-
+      .sort((a, b) => {
+        if (b.quantity !== a.quantity);
+        // ВАЖНО: Обратная сортировка по SKU (Z-A) при равном количестве
+        return b.sku.localeCompare(a.sku);
+      })
       .slice(0, 10);
 
     const bonus = calculateBonus(index, sortedSellers.length, seller);
@@ -136,9 +140,3 @@ function analyzeSalesData(data, options) {
     };
   });
 }
-
-/*.sort((a, b) => {
-        if (b.quantity !== a.quantity) return b.quantity - a.quantity;
-        // ВАЖНО: Обратная сортировка по SKU (Z-A) при равном количестве
-        return b.sku.localeCompare(a.sku);
-      }) */

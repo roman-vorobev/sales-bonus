@@ -120,7 +120,7 @@ function analyzeSalesData(data, options) {
     const top_products = Object.entries(seller.products_qty)
       .map(([sku, quantity]) => ({ quantity, sku }))
       .sort((a, b) => {
-        if (b.quantity !== a.quantity);
+        if (b.quantity !== a.quantity) return b.quantity - a.quantity;
         // ВАЖНО: Обратная сортировка по SKU (Z-A) при равном количестве
         return b.sku.localeCompare(a.sku);
       })

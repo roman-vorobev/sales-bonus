@@ -7,9 +7,8 @@
 function calculateSimpleRevenue(purchase, _product) {
   const price = purchase.sale_price || 0;
   const quantity = purchase.quantity || 0;
-  const discount = purchase.discount || 0; // Скидка в процентах (например, 20)
+  const discount = purchase.discount || 0;
 
-  // Формула: цена * кол-во * (1 - скидка / 100)
   const exactRevenue = price * quantity * (1 - discount / 100);
   return Math.round(exactRevenue * 100) / 100;
   //return Number((price * quantity * (1 - discount / 100)).toFixed(2));
@@ -96,7 +95,6 @@ function analyzeSalesData(data, options) {
       receipt.items.forEach((item) => {
         const product = productsMap[item.sku];
         if (product) {
-          // ВАЖНО: Тесты используют sale_price из самого айтема чека
           const revenue = calculateRevenue(item, product);
           const cost = (item.quantity || 0) * (product.purchase_price || 0);
 
@@ -121,7 +119,6 @@ function analyzeSalesData(data, options) {
       .map(([sku, quantity]) => ({ quantity, sku }))
       .sort((a, b) => {
         if (b.quantity !== a.quantity) return b.quantity - a.quantity;
-        // ВАЖНО: Обратная сортировка по SKU (Z-A) при равном количестве
         return b.sku.localeCompare(a.sku);
       })
       .slice(0, 10);
